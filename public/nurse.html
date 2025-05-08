@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        h2 { color: #d9534f; }
+        table { width: 90%; margin: auto; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .green { background-color: lightgreen; }
+        .red { background-color: lightcoral; }
+        a { color: #0275d8; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+        .loading { font-size: 18px; color: #666; }
+        .no-data { font-size: 16px; color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h2>Nurse Dashboard</h2>
+    <nav>
+        <a href="index.html">Register</a> |
+        <a href="treatment.html">Treatment</a> |
+        <a href="hospital.html">Admin</a> |
+        <a href="nurse.html">Nurse</a> |
+        <a href="history.html">History</a>
+      </nav>
+      
+   
+
+    <p id="loading" class="loading">Loading patient data...</p>
+    <p id="noData" class="no-data" style="display: none;">No patient data available!</p>
+
+    <table id="patientTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Patient Name</th>
+                <th>Ward Number</th>
+                <th>Bed Number</th>
+                <th>Dose Description</th>
+                <th>SMS Status</th>
+            </tr>
+        </thead>
+        <tbody id="nurseTable"></tbody>
+    </table>
+
+    <script>
+        async function loadNurseDashboard() {
+            try {
+                const response = await fetch("/nurse-dashboard");
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch data from server.");
+                }
+
+                const patients = await response.json();
+                const table = document.getElementById("nurseTable"); 
+                const loading = document.getElementById("loading");
+                const noData = document.getElementById("noData");
+                const patientTable = document.getElementById("patientTable");
+
+                loading.style.display = "none";
+
+                if (patients.length === 0) {
+                    noData.style.display = "block";
+                    patientTable.style.display = "none";
+                    return;
+                }
+
+                patientTable.style.display = "table";
+                noData.style.display = "none";
+                table.innerHTML = "";
+
+                patients.forEach(patient => {
+                    const row = document.createElement("tr");
+
+                    // Check if data is available and use "N/A" if missing
+                    const fullName = patient.fullName || "N/A";
+                    const wardNumber = patient.wardNumber || "N/A";
+                    const bedNumber = patient.bedNumber || "N/A";
+                    const dose = patient.dose || "N/A";
+                    const smsStatus = patient.smsSent ? "Activated" : "No SMS Sent";
+                    const smsClass = patient.smsSent ? 'green' : 'red';
+
+                    row.innerHTML = `
+                        <td>${fullName}</td>
+                        <td>${wardNumber}</td>
+                        <td>${bedNumber}</td>
+                        <td>${dose}</td>
+                        <td class="${smsClass}">${smsStatus}</td>
+                    `;
+                    table.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error loading nurse dashboard:", error);
+                const loading = document.getElementById("loading");
+                loading.style.display = "none";
+                const noData = document.getElementById("noData");
+                noData.textContent = "Error fetching data. Please try again later.";
+                noData.style.display = "block";
+            }
+        }
+
+        loadNurseDashboard();
+    </script>
+</body>
+</html>
